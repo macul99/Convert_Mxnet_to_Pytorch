@@ -1,0 +1,22 @@
+## first prepare mxnet model for model conversion
+cd /home/macul/Documents/macul/Convert_Mxnet_to_Pytorch/
+source ~/mx_venv/bin/activate
+python
+import sys
+sys.path.append('/home/macul/Documents/macul/mklib/utils/')
+import numpy as np
+from mxFaceFeatureExtract import mxFaceFeatureExtract
+extractor=mxFaceFeatureExtract('./','train_7',58, mean_value='/media/macul/black/face_database_raw_data/mscelb_from_insightface/mean.json',mmdnn_convert=True)
+extractor.saveModel('./','train_7_58_convert')
+
+# exit python shell
+python -m mmdnn.conversion._script.convertToIR -f mxnet -n train_7_58_convert-symbol.json -w train_7_58_convert-0000.params -d train_7_58_IR --inputShape 3,112,112
+
+# now activate pytorch venv
+python -m convertIR2Pytorch --IRModelPath train_7_58_IR.pb --dstModelPath train_7_58_pth_net_cpu.py --IRWeightPath train_7_58_IR.npy --dstWeightPath train_7_58_pth_wt_cpu.npy --dstPytorchPath train_7_58_pth_model_cpu.pth --ctx cpu
+python -m convertIR2Pytorch --IRModelPath train_7_58_IR.pb --dstModelPath train_7_58_pth_net_gpu.py --IRWeightPath train_7_58_IR.npy --dstWeightPath train_7_58_pth_wt_gpu.npy --dstPytorchPath train_7_58_pth_model_gpu.pth --ctx gpu
+
+# now prepare FaceRecog_Resnet20_LayerName.txt from forward() of train_7_58_pth_net_gpu.py
+# only keep the layer with parameters
+
+# run copy_weights_to_new_pytorch_model.ipynb
